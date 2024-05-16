@@ -4,7 +4,7 @@
 #include <utility>
 #include <chrono>
 #include <cmath>
-#include <set>
+#include <unordered_set>
 
 using namespace std;
 
@@ -76,10 +76,25 @@ public:
             swap(state[emptyRow][emptyCol], state[emptyRow + 1][emptyCol]);
         }
     }
-
     bool operator==(const Board &other) const
     {
         return state == other.getState();
+    }
+};
+
+struct BoardHash
+{
+    size_t operator()(const Board &board) const
+    {
+        size_t hash = 0;
+        for (const auto &row : board.getState())
+        {
+            for (int value : row)
+            {
+                hash ^= std::hash<int>()(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            }
+        }
+        return hash;
     }
 };
 
@@ -112,18 +127,13 @@ public:
     {
         return heuristic + pathCost > other.heuristic + other.pathCost;
     }
-
-    bool operator==(const Node &other) const
-    {
-        return board == other.getBoard();
-    }
 };
 
 class Puzzle
 {
 private:
     priority_queue<Node> frontierList;
-    set<Node> uniqueSet;
+    unordered_set<Board, BoardHash> uniqueSet;
     Board initialState;
     Board goalState;
     int heuristicOption;
@@ -180,8 +190,7 @@ public:
 
     void addToFrontier(const Node &node)
     {
-        if (uniqueSet.insert(node).second)
-            frontierList.push(node);
+        frontierList.push(node);
     }
 
     bool isFrontierEmpty() const
@@ -223,15 +232,17 @@ public:
         {
             Node currentNode = frontierList.top();
             frontierList.pop();
-            uniqueSet.erase(currentNode);
-            if (currentNode.getBoard().isGoalState(goalState))
+            if (uniqueSet.insert(currentNode.getBoard()).second)
             {
-                cout << "Solution Found!" << endl;
-                currentNode.getBoard().printBoard();
-                cout << "Path Cost: " << currentNode.getPathCost() << endl;
-                return;
+                if (currentNode.getBoard().isGoalState(goalState))
+                {
+                    cout << "Solution Found!" << endl;
+                    currentNode.getBoard().printBoard();
+                    cout << "Path Cost: " << currentNode.getPathCost() << endl;
+                    return;
+                }
+                expand(currentNode);
             }
-            expand(currentNode);
         }
         cout << "No Solution Found!" << endl;
     }
@@ -248,9 +259,9 @@ int main(int argc, char *argv[])
     int option = atoi(argv[1]);
 
     vector<vector<int>> initialBoardState = {
-        {1, 0, 2},
-        {4, 5, 3},
-        {7, 8, 6}};
+        {8, 6, 7},
+        {2, 5, 4},
+        {3, 0, 1}};
     vector<vector<int>> goalBoardState = {
         {1, 2, 3},
         {4, 5, 6},
@@ -263,8 +274,8 @@ int main(int argc, char *argv[])
     auto startTime = chrono::high_resolution_clock::now();
     puzzle.solve();
     auto endTime = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Time taken to solve the puzzle: " << duration.count() << " microseconds" << endl;
+    auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
+    cout << "Time taken to solve the puzzle: " << duration.count() << " milliseconds" << endl;
 
     return 0;
 }
