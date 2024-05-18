@@ -1,5 +1,6 @@
 *.exe
 *.out
 .vscode/**
+**/.idea/**
 **/out/**
 **/target/**
