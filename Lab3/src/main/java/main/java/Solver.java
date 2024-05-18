@@ -6,13 +6,12 @@ import java.util.Set;
 public class Solver {
 
     public static Set<Clause> solve(Set<Clause> KB) {
-        KB = Incorporate.incorporate(KB, new HashSet<>());
         do {
-            Set<Clause> KBPrime = new HashSet<>(KB);
             Set<Clause> S = new HashSet<>();
+            Set<Clause> KBPrim = new HashSet<>(KB);
 
-            for (Clause A : KBPrime) {
-                for (Clause B : KBPrime) {
+            for (Clause A : KB) {
+                for (Clause B : KB) {
                     if (!A.equals(B)) {
                         Clause C = Resolution.resolve(A, B);
                         if (C != null) {
@@ -21,11 +20,19 @@ public class Solver {
                     }
                 }
             }
+
             if (S.isEmpty()) {
-                return KBPrime;
+                return KB;
             }
             KB = Incorporate.incorporate(S, KB);
+            if (KBPrim.equals(KB)) {
+                break;
+            }
+
         } while (true);
+
+        return KB;
     }
 }
+
 
