@@ -18,7 +18,10 @@ public class Incorporate {
         for (Clause B : KB) {
             if (A.subsumes(B)) {
                 clausesToRemove.add(B);
-            } else if (B.subsumes(A)) {
+            }
+        }
+        for (Clause B : KB) {
+            if (B.subsumes(A)) {
                 return KB;
             }
         }

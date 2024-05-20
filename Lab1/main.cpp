@@ -104,9 +104,11 @@ private:
     Board board;
     int heuristic;
     int pathCost;
+    Node *pre;
+    char direction;
 
 public:
-    Node(const Board &boardState, int h, int cost) : board(boardState), heuristic(h), pathCost(cost) {}
+    Node(const Board &boardState, int h, int cost, Node *parent, char dir) : board(boardState), heuristic(h), pathCost(cost), pre(parent), direction(dir) {}
 
     Board getBoard() const
     {
@@ -121,6 +123,16 @@ public:
     int getPathCost() const
     {
         return pathCost;
+    }
+
+    Node *getParent() const
+    {
+        return pre;
+    }
+
+    char getDirection() const
+    {
+        return direction;
     }
 
     bool operator<(const Node &other) const
@@ -184,7 +196,7 @@ public:
     Puzzle(const Board &initial, const Board &goal, int option) : initialState(initial), goalState(goal), heuristicOption(option)
     {
         int initialHeuristic = calculateHeuristic(initialState);
-        Node initialNode(initialState, initialHeuristic, 0);
+        Node initialNode(initialState, initialHeuristic, 0, nullptr, ' ');
         addToFrontier(initialNode);
     }
 
@@ -198,7 +210,7 @@ public:
         return frontierList.empty();
     }
 
-    void expand(Node &currentNode)
+    void expand(Node currentNode)
     {
         Board currentBoard = currentNode.getBoard();
         vector<char> directions = {'L', 'R', 'U', 'D'};
@@ -209,7 +221,7 @@ public:
             successorBoard.move(dir);
             int successorHeuristic = calculateHeuristic(successorBoard);
             int successorPathCost = currentNode.getPathCost() + 1;
-            Node successorNode(successorBoard, successorHeuristic, successorPathCost);
+            Node successorNode(successorBoard, successorHeuristic, successorPathCost, &currentNode, dir);
             addToFrontier(successorNode);
         }
     }
@@ -238,6 +250,13 @@ public:
                 {
                     cout << "Solution Found!" << endl;
                     currentNode.getBoard().printBoard();
+                    Node *currentPoint = &currentNode;
+                    while (currentPoint != nullptr)
+                    {
+                        cout << "Node " << currentPoint->getPathCost();
+                        cout << " direction from parent: " << currentPoint->getDirection() << endl;
+                        currentPoint = currentPoint->getParent();
+                    }
                     cout << "Path Cost: " << currentNode.getPathCost() << endl;
                     return;
                 }
