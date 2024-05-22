@@ -53,28 +53,35 @@ public:
         return make_pair(-1, -1);
     }
 
-    void move(char direction)
+    bool move(char direction)
     {
         pair<int, int> emptyPos = findTilePosition(0);
+        bool success = false;
         int emptyRow = emptyPos.first;
         int emptyCol = emptyPos.second;
 
         if (direction == 'L' && emptyCol > 0)
         {
             swap(state[emptyRow][emptyCol], state[emptyRow][emptyCol - 1]);
+            success = true;
         }
         else if (direction == 'R' && emptyCol < state[0].size() - 1)
         {
             swap(state[emptyRow][emptyCol], state[emptyRow][emptyCol + 1]);
+            success = true;
         }
         else if (direction == 'U' && emptyRow > 0)
         {
             swap(state[emptyRow][emptyCol], state[emptyRow - 1][emptyCol]);
+            success = true;
         }
         else if (direction == 'D' && emptyRow < state.size() - 1)
         {
             swap(state[emptyRow][emptyCol], state[emptyRow + 1][emptyCol]);
+
+            success = true;
         }
+        return success;
     }
     bool operator==(const Board &other) const
     {
@@ -108,7 +115,7 @@ private:
     char direction;
 
 public:
-    Node(const Board &boardState, int h, int cost, Node *parent, char dir) : board(boardState), heuristic(h), pathCost(cost), pre(parent), direction(dir) {}
+    Node(const Board &boardState, int h, int cost, Node *parent, char dir) : board(move(boardState)), heuristic(h), pathCost(cost), pre(parent), direction(dir) {}
 
     Board getBoard() const
     {
@@ -140,11 +147,18 @@ public:
         return heuristic + pathCost > other.heuristic + other.pathCost;
     }
 };
+struct CompareNode
+{
+    bool operator()(Node *lhs, Node *rhs) const
+    {
+        return *lhs < *rhs;
+    }
+};
 
 class Puzzle
 {
 private:
-    priority_queue<Node> frontierList;
+    priority_queue<Node *, vector<Node *>, CompareNode> frontierList;
     unordered_set<Board, BoardHash> uniqueSet;
     Board initialState;
     Board goalState;
@@ -196,11 +210,19 @@ public:
     Puzzle(const Board &initial, const Board &goal, int option) : initialState(initial), goalState(goal), heuristicOption(option)
     {
         int initialHeuristic = calculateHeuristic(initialState);
-        Node initialNode(initialState, initialHeuristic, 0, nullptr, ' ');
+        Node *initialNode = new Node(initialState, initialHeuristic, 0, nullptr, '0');
         addToFrontier(initialNode);
     }
 
-    void addToFrontier(const Node &node)
+    ~Puzzle()
+    {
+        while (!frontierList.empty())
+        {
+            delete frontierList.top();
+            frontierList.pop();
+        }
+    }
+    void addToFrontier(Node *node)
     {
         frontierList.push(node);
     }
@@ -210,19 +232,21 @@ public:
         return frontierList.empty();
     }
 
-    void expand(Node currentNode)
+    void expand(Node *currentNode)
     {
-        Board currentBoard = currentNode.getBoard();
+        Board currentBoard = currentNode->getBoard();
         vector<char> directions = {'L', 'R', 'U', 'D'};
 
         for (char dir : directions)
         {
             Board successorBoard = currentBoard;
-            successorBoard.move(dir);
-            int successorHeuristic = calculateHeuristic(successorBoard);
-            int successorPathCost = currentNode.getPathCost() + 1;
-            Node successorNode(successorBoard, successorHeuristic, successorPathCost, &currentNode, dir);
-            addToFrontier(successorNode);
+            if (successorBoard.move(dir))
+            {
+                int successorHeuristic = calculateHeuristic(successorBoard);
+                int successorPathCost = currentNode->getPathCost() + 1;
+                Node *successorNode = new Node(successorBoard, successorHeuristic, successorPathCost, currentNode, dir);
+                addToFrontier(successorNode);
+            }
         }
     }
 
@@ -242,22 +266,25 @@ public:
     {
         while (!isFrontierEmpty())
         {
-            Node currentNode = frontierList.top();
+            Node *currentNode = frontierList.top();
             frontierList.pop();
-            if (uniqueSet.insert(currentNode.getBoard()).second)
+            if (uniqueSet.insert(currentNode->getBoard()).second)
             {
-                if (currentNode.getBoard().isGoalState(goalState))
+                if (currentNode->getBoard().isGoalState(goalState))
                 {
                     cout << "Solution Found!" << endl;
-                    currentNode.getBoard().printBoard();
-                    Node *currentPoint = &currentNode;
+                    currentNode->getBoard().printBoard();
+                    Node *currentPoint = currentNode;
                     while (currentPoint != nullptr)
                     {
-                        cout << "Node " << currentPoint->getPathCost();
-                        cout << " direction from parent: " << currentPoint->getDirection() << endl;
+                        cout << "Node " << currentPoint->getPathCost() << endl;
+                        cout << "shape: " << endl;
+                        currentPoint->getBoard().printBoard();
+                        cout << "Direction from parent: " << currentPoint->getDirection() << endl
+                             << endl;
                         currentPoint = currentPoint->getParent();
                     }
-                    cout << "Path Cost: " << currentNode.getPathCost() << endl;
+                    cout << "Path Cost: " << currentNode->getPathCost() << endl;
                     return;
                 }
                 expand(currentNode);
@@ -281,6 +308,7 @@ int main(int argc, char *argv[])
         {8, 6, 7},
         {2, 5, 4},
         {3, 0, 1}};
+
     vector<vector<int>> goalBoardState = {
         {1, 2, 3},
         {4, 5, 6},
