@@ -7,11 +7,6 @@ public class Clause {
     Set<String> p;
     Set<String> n;
 
-    public Clause() {
-        p = new HashSet<>();
-        n = new HashSet<>();
-    }
-
     public Clause(Set<String> positiveLiterals, Set<String> negativeLiterals) {
         this.p = new HashSet<>(positiveLiterals);
         this.n = new HashSet<>(negativeLiterals);
@@ -47,9 +42,9 @@ public class Clause {
 
     @Override
     public String toString() {
-        return "Clause{" +
+        return "Clause { " +
                 "positiveLiterals=" + p +
                 ", negativeLiterals=" + n +
-                '}';
+                " }";
     }
 }

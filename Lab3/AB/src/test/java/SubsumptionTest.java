@@ -14,8 +14,7 @@ public class SubsumptionTest {
     @Test
     public void testSubsumption1() {
         Set<String> p1 = new HashSet<>(Arrays.asList("c", "a"));
-        Set<String> n1 = new HashSet<>();
-        Clause clause1 = new Clause(p1, n1);
+        Clause clause1 = new Clause(p1, new HashSet<>());
 
         Set<String> p2 = new HashSet<>(Arrays.asList("a", "b", "c"));
         Clause clause2 = new Clause(p2, new HashSet<>());

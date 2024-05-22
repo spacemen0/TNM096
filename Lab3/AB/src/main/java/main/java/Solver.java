@@ -24,7 +24,7 @@ public class Solver {
             if (S.isEmpty()) {
                 return KB;
             }
-            KB = Incorporate.incorporate(S, KB);
+            Incorporate.incorporate(S, KB);
             if (KBPrim.equals(KB)) {
                 break;
             }
