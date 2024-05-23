@@ -32,5 +32,4 @@ public class SolverTest {
             System.out.println(clause);
         }
     }
-
 }

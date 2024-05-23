@@ -6,8 +6,9 @@ import java.util.Set;
 public class Solver {
 
     public static Set<Clause> solve(Set<Clause> KB) {
+        KB = Incorporate.incorporate(KB, new HashSet<>());
         do {
-            Set<Clause> S = new HashSet<>();
+            Set<Clause> s = new HashSet<>();
             Set<Clause> KBPrim = new HashSet<>(KB);
 
             for (Clause A : KB) {
@@ -15,16 +16,16 @@ public class Solver {
                     if (!A.equals(B)) {
                         Clause C = Resolution.resolve(A, B);
                         if (C != null) {
-                            S.add(C);
+                            s.add(C);
                         }
                     }
                 }
             }
 
-            if (S.isEmpty()) {
+            if (s.isEmpty()) {
                 return KB;
             }
-            Incorporate.incorporate(S, KB);
+            Incorporate.incorporate(s, KB);
             if (KBPrim.equals(KB)) {
                 break;
             }

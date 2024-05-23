@@ -1,4 +1,6 @@
 package main.java;
+
+import java.util.HashSet;
 import java.util.Set;
 
 public class Incorporate {
@@ -11,12 +13,18 @@ public class Incorporate {
     }
 
     public static void incorporateClause(Clause A, Set<Clause> KB) {
+        Set<Clause> toBeRemoved = new HashSet<>();
         for (Clause B : KB) {
             if (B.subsumes(A)) {
                 return;
             }
         }
-        KB.removeIf(A::subsumes);
+        for (Clause B : KB) {
+            if (A.subsumes(B)) {
+                toBeRemoved.add(B);
+            }
+        }
+        KB.removeAll(toBeRemoved);
         KB.add(A);
     }
 }
